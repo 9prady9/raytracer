@@ -1,0 +1,119 @@
+CubeMap Set1
+-------------
+10.0 0.0 0.0
+./ENV/2/posx.jpg
+-10.0 0.0 0.0
+./ENV/2/negx.jpg
+0.0 10.0 0.0
+./ENV/2/posy.jpg
+0.0 -10.0 0.0
+./ENV/2/negy.jpg
+0.0 0.0 10.0
+./ENV/2/posz.jpg
+0.0 0.0 -10.0
+./ENV/2/negz.jpg
+
+CubeMap Set2
+-------------
+10.0 0.0 0.0
+./ENV/cubemap_snow/snow_positive_x.jpg
+-10.0 0.0 0.0
+./ENV/cubemap_snow/snow_negative_x.jpg
+0.0 10.0 0.0
+./ENV/cubemap_snow/snow_positive_y.jpg
+0.0 -10.0 0.0
+./ENV/cubemap_snow/snow_negative_y.jpg
+0.0 0.0 10.0
+./ENV/cubemap_snow/snow_positive_z.jpg
+0.0 0.0 -10.0
+./ENV/cubemap_snow/snow_negative_z.jpg
+
+CubeMap set3
+------------
+10.0 0.0 0.0
+./ENV/uffizi_gallery/posx.png
+-10.0 0.0 0.0
+./ENV/uffizi_gallery/negx.png
+0.0 10.0 0.0
+./ENV/uffizi_gallery/posy.png
+0.0 -10.0 0.0
+./ENV/uffizi_gallery/negy.png
+0.0 0.0 10.0
+./ENV/uffizi_gallery/posz.png
+0.0 0.0 -10.0
+./ENV/uffizi_gallery/negz.png
+
+
+Cube Set4:
+----------
+10.0 0.0 0.0
+./ENV/escher/posx.jpg
+-10.0 0.0 0.0
+./ENV/escher/negx.jpg
+0.0 10.0 0.0
+./ENV/escher/posy.jpg
+0.0 -10.0 0.0
+./ENV/escher/negy.jpg
+0.0 0.0 10.0
+./ENV/escher/posz.jpg
+0.0 0.0 -10.0
+./ENV/escher/negz.jpg
+
+Cube Set5:
+----------
+10.0 0.0 0.0
+./ENV/his/posx.jpg
+-10.0 0.0 0.0
+./ENV/his/negx.jpg
+0.0 10.0 0.0
+./ENV/his/posy.jpg
+0.0 -10.0 0.0
+./ENV/his/negy.jpg
+0.0 0.0 10.0
+./ENV/his/posz.jpg
+0.0 0.0 -10.0
+./ENV/his/negz.jpg
+
+
+Cube Set6:
+----------
+10.0 0.0 0.0
+./ENV/bridge/posx.jpg
+-10.0 0.0 0.0
+./ENV/bridge/negx.jpg
+0.0 10.0 0.0
+./ENV/bridge/posy.jpg
+0.0 -10.0 0.0
+./ENV/bridge/negy.jpg
+0.0 0.0 10.0
+./ENV/bridge/posz.jpg
+0.0 0.0 -10.0
+./ENV/bridge/negz.jpg
+
+
+Cube Set7:
+----------
+10.0 0.0 0.0
+./ENV/gamlastan/posx.jpg
+-10.0 0.0 0.0
+./ENV/gamlastan/negx.jpg
+0.0 10.0 0.0
+./ENV/gamlastan/posy.jpg
+0.0 -10.0 0.0
+./ENV/gamlastan/negy.jpg
+0.0 0.0 10.0
+./ENV/gamlastan/posz.jpg
+0.0 0.0 -10.0
+./ENV/gamlastan/negz.jpg
+
+
+Golden Settings for Sphere Map
+------------------------------
+this->n[0].set(0,0,-1);
+this->n[1].set(-1,0,0);
+this->n[2].set(0,-1,0);
+
+
+Factor for radials=12 is 18.0 for direct Map hit
+Factor for radials=272 is 89.0 for direct Map hit
+Factor for radials=642 is 210.0 for direct Map hit
