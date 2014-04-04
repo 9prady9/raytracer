@@ -265,9 +265,9 @@ PixColor Material::computeSolidTexColor(const Point& Ph)
         return WHITE;*/
 
     float xFrac, xInt;
-    xFrac = modf(Ph.X(), &xInt);
+    xFrac = modf(Ph.x, &xInt);
     float yFrac, yInt;
-    yFrac = modf(Ph.Y(), &yInt);
+    yFrac = modf(Ph.y, &yInt);
 
     if( julia->isInside(abs(xFrac),abs(yFrac)) )
         return RED;
@@ -305,10 +305,10 @@ SphereMap::SphereMap(Point& cen, float r, std::string filename)
 void SphereMap::UV(Point& Ph, float& u, float &v)
 {
     Vector3D temp;
-    temp = subP4P(Ph,*center);
-    float X = dotProduct(n[0], temp)/radius;
-    float Y = dotProduct(n[1], temp)/radius;
-    float Z = dotProduct(n[2], temp)/radius;
+    temp = Ph-*center;
+    float X = dot(n[0], temp)/radius;
+    float Y = dot(n[1], temp)/radius;
+    float Z = dot(n[2], temp)/radius;
     u = 0.5*atan2(Y,X)/PI+0.5;
     v = acos(Z) / PI;
 }
@@ -318,15 +318,15 @@ void SphereMap::intersect(Ray& r, PixColor& ImgColor)
     float t, b, c;
 
     // Move out of sphere to get a proper intersection
-    Point newPh; newPh = addP2V(r.getOrigin(),mulV(r.getDirection(),3*radius));
-    Vector3D newDir; newDir = mulV(r.getDirection(),-1.0);
+    Point newPh; newPh = r.origin + r.direction*(3*radius);
+    Vector3D newDir; newDir = r.direction*-1.0;
 
     // Now compute the intersection as though a ray is hitting env map from outside
-    Vector3D Vce; Vce = subP4P(*center,newPh);
-    b = dotProduct( newDir, Vce);
-    c = dotProduct(Vce,Vce) - radius*radius;
+    Vector3D Vce; Vce = (*center)-newPh;
+    b = dot( newDir, Vce);
+    c = dot(Vce,Vce) - radius*radius;
     t = (b-sqrt(b*b-c));
-    Point Ph; Ph = addP2V(newPh,mulV(newDir,t));
+    Point Ph; Ph = newPh+newDir*t;
 
     float u,v;
     this->UV(Ph, u, v);
@@ -411,50 +411,50 @@ PixColor CubeMap::readCubeMap(unsigned int k, float u, float v)
 void CubeMap::intersect(Ray& r, PixColor& ImgColor)
 {
     float u,v;
-    Vector3D n_pe; n_pe = r.getDirection();
+    Vector3D n_pe; n_pe = r.direction;
 
-    if ((fabsf(n_pe.DX()) >= fabsf(n_pe.DY())) && (fabsf(n_pe.DX()) >= fabsf(n_pe.DZ())))
+    if ((fabsf(n_pe.vec[0]) >= fabsf(n_pe.vec[1])) && (fabsf(n_pe.vec[0]) >= fabsf(n_pe.vec[2])))
     {
-        if (n_pe.DX() > 0.0)
+        if (n_pe.vec[0] > 0.0)
         {
-            u = 1.0 - (n_pe.DZ()/n_pe.DX()+ 1.0) * 0.5;
-            v = (n_pe.DY()/n_pe.DX()+ 1.0) * 0.5;
+            u = 1.0 - (n_pe.vec[2]/n_pe.vec[0]+ 1.0) * 0.5;
+            v = (n_pe.vec[1]/n_pe.vec[0]+ 1.0) * 0.5;
             ImgColor = readCubeMap(0,u,v);
         }
-        else if (n_pe.DX() < 0.0)
+        else if (n_pe.vec[0] < 0.0)
         {
-            u = 1.0 - (n_pe.DZ()/n_pe.DX()+ 1.0) * 0.5;
-            v = 1.0 - (n_pe.DY()/n_pe.DX()+ 1.0) * 0.5;
+            u = 1.0 - (n_pe.vec[2]/n_pe.vec[0]+ 1.0) * 0.5;
+            v = 1.0 - (n_pe.vec[1]/n_pe.vec[0]+ 1.0) * 0.5;
             ImgColor = readCubeMap(1,u,v);
         }
     }
-    else if ((fabsf(n_pe.DY()) >= fabsf(n_pe.DX())) && (fabsf(n_pe.DY()) >= fabsf(n_pe.DZ())))
+    else if ((fabsf(n_pe.vec[1]) >= fabsf(n_pe.vec[0])) && (fabsf(n_pe.vec[1]) >= fabsf(n_pe.vec[2])))
     {
-        if (n_pe.DY() > 0.0)
+        if (n_pe.vec[1] > 0.0)
         {
-            u = (n_pe.DX()/n_pe.DY()+ 1.0) * 0.5;
-            v = 1.0 - (n_pe.DZ()/n_pe.DY()+ 1.0) * 0.5;
+            u = (n_pe.vec[0]/n_pe.vec[1]+ 1.0) * 0.5;
+            v = 1.0 - (n_pe.vec[2]/n_pe.vec[1]+ 1.0) * 0.5;
             ImgColor = readCubeMap(3,u,v);
         }
-        else if (n_pe.DY() < 0.0)
+        else if (n_pe.vec[1] < 0.0)
         {
-            u = 1.0 - (n_pe.DX()/n_pe.DY()+ 1.0) * 0.5;
-            v = (n_pe.DZ()/n_pe.DY()+ 1.0) * 0.5;
+            u = 1.0 - (n_pe.vec[0]/n_pe.vec[1]+ 1.0) * 0.5;
+            v = (n_pe.vec[2]/n_pe.vec[1]+ 1.0) * 0.5;
             ImgColor = readCubeMap(2,u,v);
         }
     }
-    else if ((fabsf(n_pe.DZ()) >= fabsf(n_pe.DX())) && (fabsf(n_pe.DZ()) >= fabsf(n_pe.DY())))
+    else if ((fabsf(n_pe.vec[2]) >= fabsf(n_pe.vec[0])) && (fabsf(n_pe.vec[2]) >= fabsf(n_pe.vec[1])))
     {
-        if (n_pe.DZ() > 0.0)
+        if (n_pe.vec[2] > 0.0)
         {
-            u = (n_pe.DX()/n_pe.DZ()+ 1.0) * 0.5;
-            v = (n_pe.DY()/n_pe.DZ()+ 1.0) * 0.5;
+            u = (n_pe.vec[0]/n_pe.vec[2]+ 1.0) * 0.5;
+            v = (n_pe.vec[1]/n_pe.vec[2]+ 1.0) * 0.5;
             ImgColor = readCubeMap(4,u,v);
         }
-        else if (n_pe.DZ() < 0.0)
+        else if (n_pe.vec[2] < 0.0)
         {
-            u = (n_pe.DX()/n_pe.DZ()+ 1.0) * 0.5;
-            v = 1.0 - (n_pe.DY()/n_pe.DZ()+ 1.0) * 0.5;
+            u = (n_pe.vec[0]/n_pe.vec[2]+ 1.0) * 0.5;
+            v = 1.0 - (n_pe.vec[1]/n_pe.vec[2]+ 1.0) * 0.5;
             ImgColor = readCubeMap(5,u,v);
         }
     }
@@ -468,7 +468,6 @@ CubeMap::~CubeMap()
             delete[] map[k][i];
         delete[] map[k];
     }
-    delete[] map;
 }
 
 

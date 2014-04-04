@@ -1,49 +1,50 @@
+<?xml version="1.0" encoding="us-ascii"?>
 <objects>  
-  <object type="Plane" MaterialType="diffusive" TextureType="IMAGE" neta="0">
+  <!--object type="Plane" MaterialType="diffusive" TextureType="IMAGE" neta="0">
     <normal x="0.0" y="-1.0" z="0.0" />
 	<point x="0.0" y="3.0" z="-1.0" />
 	<haxis x="1.0" y="0.0" z="0.0" />
 	<vaxis x="0.0" y="1.0" z="0.0" />
 	<scale x="8.0" y="8.0" z="8.0" />
 	<color red="1.0" green="1.0" blue="1.0" /> 
-    <texFile>../../TextureImages/crate.jpg</texFile>
+    <texFile>F:\CodeWorks\GitHub\raytracer\input\textures\Stone_Cobbles.jpg</texFile>
     <motion speed="0.0">
       <direction x="0.0" y="0.0" z="0.0" />
     </motion>
-  </object>
+  </object-->
   
   <object type="Sphere" MaterialType="diffusive" TextureType="IMAGE" neta="0">
-    <center x="0.0" y="-1.0" z="0.0" />
-	<radius>5.0</radius>
+    <center x="0.0" y="0.0" z="0.0" />
+	<radius>2.0</radius>
 	<haxis x="1.0" y="0.0" z="0.0" />
 	<vaxis x="0.0" y="1.0" z="0.0" />
 	<scale x="1.0" y="0.0" z="1.0" />
 	<color red="1.0" green="1.0" blue="1.0" /> 
-    <texFile>../../TextureImages/crate.jpg</texFile>
+    <texFile>F:\CodeWorks\GitHub\raytracer\input\textures\linuxtux.png</texFile>
     <motion speed="0.0">
       <direction x="0.0" y="0.0" z="0.0" />
     </motion>
   </object>
   
-  <object type="Quadric" MaterialType="diffusive" TextureType="IMAGE" neta="0">
+  <!--object type="Quadric" MaterialType="diffusive" TextureType="IMAGE" neta="0">
     <haxis x="1.0" y="0.0" z="0.0" />
 	<vaxis x="0.0" y="1.0" z="0.0" />
 	<point x="0.0" y="0.0" z="-1.0" />
 	<scale x="1.0" y="1.0" z="1.0" />
 	<aValues a20="0" a21="0" a22="0" a10="0" a11="-1" a12="0" a00="0"/>
 	<color red="1.0" green="0.5" blue="0.1" /> 
-    <texFile>../../TextureImages/crate.jpg</texFile>
+    <texFile>F:\CodeWorks\GitHub\raytracer\input\textures\brownpaper.jpg</texFile>
     <motion speed="0.0">
       <direction x="0.0" y="0.0" z="0.0" />
     </motion>
   </object>
   
   <object type="Mesh" MaterialType="diffusive" TextureType="PROCEDURE" neta="0">
-    <objFile>../../Triangular/nCube.obj</objFile>	
+    <objFile>F:\CodeWorks\GitHub\raytracer\input\meshes\nCube.obj</objFile>
 	<color red="1.0" green="1.0" blue="1.0" />
-    <texFile>../../TextureImages/crate.jpg</texFile>
+    <texFile>F:\CodeWorks\GitHub\raytracer\input\textures\crate.jpg</texFile>
     <motion speed="0.0">
       <direction x="0.0" y="0.0" z="0.0" />
     </motion>
-  </object>
+  </object-->
 </objects>

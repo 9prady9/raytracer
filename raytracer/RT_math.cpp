@@ -4,22 +4,17 @@
 
 
 /* ------------- Methods of Point class ------------- */
-Point::Point(){}
+Point::Point() { Point(0.0f,0.0f,0.0f); }
 Point::Point(float a,float b, float c) { x=a; y=b; z=c; }
-Point::Point(const Point& p) { x=p.X(); y=p.Y(); z=p.Z(); }
+Point::Point(const Point& p) { x=p.x; y=p.y; z=p.z; }
 
 void Point::set(float a,float b, float c) { x=a; y=b; z=c; }
-void Point::set(Point p) { x=p.X(); y=p.Y(); z=p.Z(); }
-
-float Point::X() const { return x; }
-float Point::Y() const { return y; }
-float Point::Z() const { return z; }
 
 Point& Point::operator =(const Point& p)
 {
     if(this != &p)
     {
-        x=p.X(); y=p.Y(); z=p.Z();
+        x=p.x; y=p.y; z=p.z;
     }
     return *this;
 }
@@ -31,31 +26,11 @@ Vector3D::Vector3D(float x,float y,float z) { vec[0]=x; vec[1]=y; vec[2]=z; mag=
 
 Vector3D::Vector3D(const Vector3D& v)
 {
-    vec[0]=v.DX(); vec[1]=v.DY(); vec[2]=v.DZ();
+    vec[0]=v.vec[0]; vec[1]=v.vec[1]; vec[2]=v.vec[2];
     mag = sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
 }
 
 void Vector3D::set(float x,float y,float z) { vec[0]=x; vec[1]=y; vec[2]=z; mag=sqrt(x*x+y*y+z*z); }
-
-void Vector3D::set(Vector3D v)
-{
-    vec[0]=v.DX(); vec[1]=v.DY(); vec[2]=v.DZ();
-    mag = sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
-}
-
-float Vector3D::DX() const { return vec[0]; }
-float Vector3D::DY() const { return vec[1]; }
-float Vector3D::DZ() const { return vec[2]; }
-float Vector3D::magnitude() { return mag; }
-int Vector3D::length() { return 3; }
-
-void Vector3D::add(Vector3D& v)
-{
-    this->vec[0] = this->vec[0]+v.DX();
-    this->vec[1] = this->vec[1]+v.DY();
-    this->vec[2] = this->vec[2]+v.DZ();
-    mag = sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
-}
 
 void Vector3D::normalize()
 {
@@ -77,7 +52,7 @@ Vector3D& Vector3D::operator=(const Vector3D& v)
 {
     if( this != &v )
     {
-        vec[0]=v.DX(); vec[1]=v.DY(); vec[2]=v.DZ();
+        vec[0]=v.vec[0]; vec[1]=v.vec[1]; vec[2]=v.vec[2];
         mag = sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
     }
     return *this;
@@ -85,20 +60,58 @@ Vector3D& Vector3D::operator=(const Vector3D& v)
 
 
 /* ------------- Methods of Ray class ------------- */
-Ray::Ray() {}
-
-Ray::Ray(Point o, Vector3D dir)
+Ray::Ray(const Point &o, const Vector3D &dir)
 {
-    this->origin = new Point;
-    this->origin->set(o);
-    this->direction = new Vector3D;
-    this->direction->set(dir);
+	this->origin = o;
+    this->direction = dir;
 }
 
-Point Ray::getOrigin() { return *origin; }
-Vector3D Ray::getDirection() { return *direction; }
-Point Ray::pointAtDist(float t) { return addP2V(*origin, mulV(*direction,t)); }
-Ray::~Ray() { delete origin; delete direction; }
+Ray::Ray(const Ray& r)
+{
+	origin = r.origin;
+	direction = r.direction;
+}
+
+Point Ray::pointAtDist(float t) { return origin+direction*t; }
+
+
+
+Point operator+(const Point& op1, const Vector3D& op2) {
+    return Point(op1.x+op2.vec[0], op1.y+op2.vec[1], op1.z+op2.vec[2]);
+}
+
+Vector3D operator-(const Point& op1, const Point& op2) {
+    return Vector3D(op1.x-op2.x, op1.y-op2.y, op1.z-op2.z);
+}
+
+Point operator-(const Point& op1, const Vector3D& op2) {
+    return Point(op1.x-op2.vec[0], op1.y-op2.vec[1], op1.z-op2.vec[2]);
+}
+
+Vector3D operator+(const Vector3D& op1, const Vector3D& op2) {
+    return Vector3D(op1.vec[0]+op2.vec[0], op1.vec[1]+op2.vec[1], op1.vec[2]+op2.vec[2]);
+}
+
+Vector3D operator-(const Vector3D& op1, const Vector3D& op2) {
+    return Vector3D(op1.vec[0]-op2.vec[0], op1.vec[1]-op2.vec[1], op1.vec[2]-op2.vec[2]);
+}
+
+Vector3D operator*(const Vector3D& op1, const float op2) {
+    return Vector3D(op1.vec[0]*op2, op1.vec[1]*op2, op1.vec[2]*op2);
+}
+
+Vector3D operator/(const Vector3D& op1,const float op2) {
+	return Vector3D(op1.vec[0]/op2, op1.vec[1]/op2, op1.vec[2]/op2);
+}
+
+Vector3D cross(const Vector3D& v0, const Vector3D& v1) {
+    return Vector3D(v0.vec[1]*v1.vec[2]-v0.vec[2]*v1.vec[1], v0.vec[2]*v1.vec[0]-v0.vec[0]*v1.vec[2], v0.vec[0]*v1.vec[1]-v0.vec[1]*v1.vec[0]);
+}
+
+float dot(const Vector3D& v0, const Vector3D& v1) {
+    return (v0.vec[0]*v1.vec[0]+v0.vec[1]*v1.vec[1]+v0.vec[2]*v1.vec[2]);
+}
+
 
 
 /* ------------- Methods of Mat class ------------- */
@@ -225,57 +238,13 @@ void copyArray(int* dest, int* source, int size)
                 dest[i] = source[i];
 }
 
-Point addP2V(const Point& op1, const Vector3D& op2) {
-    Point ret_val(op1.X()+op2.DX(), op1.Y()+op2.DY(), op1.Z()+op2.DZ());
-    return ret_val;
-}
-
-Vector3D subP4P(const Point& op1, const Point& op2) {
-    Vector3D ret_val(op1.X()-op2.X(), op1.Y()-op2.Y(), op1.Z()-op2.Z());
-    return ret_val;
-}
-
-Point subP4V(const Point& op1, const Vector3D& op2) {
-    Point ret_val(op1.X()-op2.DX(), op1.Y()-op2.DY(), op1.Z()-op2.DZ());
-    return ret_val;
-}
-
-Vector3D addV2V(const Vector3D& op1, const Vector3D& op2) {
-    Vector3D ret_val(op1.DX()+op2.DX(), op1.DY()+op2.DY(), op1.DZ()+op2.DZ());
-    return ret_val;
-}
-
-Vector3D subV4V(const Vector3D& op1, const Vector3D& op2) {
-    Vector3D ret_val(op1.DX()-op2.DX(), op1.DY()-op2.DY(), op1.DZ()-op2.DZ());
-    return ret_val;
-}
-
-Vector3D mulV(const Vector3D& op1, const float op2) {
-    Vector3D ret_val(op1.DX()*op2, op1.DY()*op2, op1.DZ()*op2);
-    return ret_val;
-}
-
-Vector3D divV(const Vector3D& op1,const float op2) {
-    Vector3D ret_val(op1.DX()/op2, op1.DY()/op2, op1.DZ()/op2);
-    return ret_val;
-}
-
-Vector3D crossProduct(const Vector3D& v0, const Vector3D& v1) {
-    Vector3D ret_val(v0.DY()*v1.DZ()-v0.DZ()*v1.DY(), v0.DZ()*v1.DX()-v0.DX()*v1.DZ(), v0.DX()*v1.DY()-v0.DY()*v1.DX());
-    return ret_val;
-}
-
-float dotProduct(const Vector3D& v0, const Vector3D& v1) {
-    return (v0.DX()*v1.DX()+v0.DY()*v1.DY()+v0.DZ()*v1.DZ());
-}
-
 Mat toMatrix(Vector3D& v)
 {
     /* convert a type Vector3D to type Mat with dimensions 3 by 1 matrix(coloumn vector) */
-    Mat m(v.length(),1);
-    m.setElement(0,0,v.DX());
-    m.setElement(1,0,v.DY());
-    m.setElement(2,0,v.DZ());
+    Mat m(3,1);
+    m.setElement(0,0,v.vec[0]);
+    m.setElement(1,0,v.vec[1]);
+    m.setElement(2,0,v.vec[2]);
     return m;
 }
 

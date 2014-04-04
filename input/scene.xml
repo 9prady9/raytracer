@@ -1,0 +1,67 @@
+<Scene>
+  <targetImage name="ImageSynthesis" outputDirectory="F:\CodeWorks\GitHub\raytracer\output\">
+	<resolution width="640" height="480"/>
+	<antiAlias m="2" n="2"></antiAlias>
+  </targetImage>
+  
+  <viewPlane sx="12" sy="9" eyeToViewPlane="14" />
+  
+  <camera>
+    <eye x="0.0" y="-0.5" z="-10.0" />
+    <lookAt x="0.0" y="-0.5" z="1.0" />
+	<up x="0.0" y="1.0" z="0.0" />
+  </camera>
+  
+  <pointLights count="1">
+    <light sno="1">
+	  <position x="-4.0" y="-8.0" z="-6.0" />
+	  <color red="1.0" green="1.0" blue="1.0" />
+	</light>
+  </pointLights>
+  
+  <areaLights count="1">
+    <ALight sno="1">
+	  <center x="-5.0" y="-5.0" z="-6.0" />
+	  <horizontal x="1.0" y="0.0" z="0.0" />
+	  <vertical x="0.0" y="1.0" z="0.0" />
+	  <samples hSamples="4" vSamples="4"/>
+	  <color red="1.0" green="1.0" blue="1.0" />
+	</ALight>
+  </areaLights>
+  
+  <specularLight phongExponent="33">
+    <color red="1.0" green="1.0" blue="1.0" />
+  </specularLight>
+  
+  <ambientLight intensity="0.0">
+    <color red="1.0" green="1.0" blue="1.0" />
+  </ambientLight>
+  
+  <goochGooch>
+    <cool factor="0.05">
+	  <color red="0.1" green="0.1" blue="0.5" />
+	</cool>
+	<warm factor="0.4">
+	  <color red="0.4" green="0.4" blue="0.1" />
+	</warm>
+  </goochGooch>
+  
+  <reflection depth="3" intensity="0.3" />
+  
+  <refraction depth="2" intensity="0.3" />
+  
+  <DOF focalLength="4" apertureDiameter="0.25" numOfRays="16" />
+  
+  <ambientOcclusion HitEffectiveDistance="2" radialSource="../Geodesic/012.obj" />
+  
+  <envMap whichOne="cubeMap">
+    <cubeMap>
+	  <posx>F:\CodeWorks\GitHub\raytracer\input\environment_maps\bridge\posx.jpg</posx>
+	  <negx>F:\CodeWorks\GitHub\raytracer\input\environment_maps\bridge\negx.jpg</negx>
+	  <posy>F:\CodeWorks\GitHub\raytracer\input\environment_maps\bridge\posy.jpg</posy>
+	  <negy>F:\CodeWorks\GitHub\raytracer\input\environment_maps\bridge\negy.jpg</negy>
+	  <posz>F:\CodeWorks\GitHub\raytracer\input\environment_maps\bridge\posz.jpg</posz>
+	  <negz>F:\CodeWorks\GitHub\raytracer\input\environment_maps\bridge\negz.jpg</negz>
+    </cubeMap>
+  </envMap>
+</Scene>

@@ -59,7 +59,7 @@ unsigned int Primitive::getId() { return this->id; }
 
 float Primitive::getNeta() { return matter->neta; }
 
-bool Primitive::isTextureEnabled() { return matter->textureType; }
+bool Primitive::isTextureEnabled() { return matter->textureType==IMAGE; }
 bool Primitive::ifDiffusive() { return (matter->materialType == diffusive ? true : false ); }
 bool Primitive::isReflective() { return (matter->materialType == reflective ? true : false ); }
 bool Primitive::isRefractive() { return (matter->materialType == refractive ? true : false ); }
@@ -85,9 +85,9 @@ Plane::Plane(Vector3D& nor, Point& p, Vector3D* n, float s[], char t, unsigned i
     this->normal = new Vector3D(nor);
     this->P0 = new Point(p);
     naxes = new Vector3D[3];
-    this->naxes[0].set(n[0]);
-    this->naxes[1].set(n[1]);
-    this->naxes[2].set(crossProduct(n[0], n[1]));
+    this->naxes[0] = n[0];
+    this->naxes[1] = n[1];
+    this->naxes[2] = cross(n[0], n[1]);
     this->texScale[0] = s[0];
     this->texScale[1] = s[1];
     this->texScale[2] = s[2];
@@ -97,22 +97,22 @@ float Plane::intersect(Ray r)
 {
     float ret_val;
 
-    float tmp = dotProduct(*normal, r.getDirection());
+    float tmp = dot(*normal, r.direction);
     if( tmp > 0)
         ret_val = -1.0;
     else
-        ret_val = dotProduct(*normal, subP4P(*P0, r.getOrigin()))/tmp;
+        ret_val = dot(*normal, (*P0)-r.origin)/tmp;
     return ret_val;
 }
 
 bool Plane::isVisible(const Point& p)
 {
-    return !(dotProduct(*normal,subP4P(p,*P0)) < 0);
+    return !(dot(*normal,p-(*P0)) < 0);
 }
 
 void Plane::extract_Color_Normal(const Point& Ph, Vector3D &norm, PixColor &mycolor)
 {
-    norm.set(*normal);
+    norm = *normal;
     if( isTextureEnabled() )
     {
         if(matter->textureType == SOLID)
@@ -154,20 +154,21 @@ PixColor Plane::getColor(const Point& Ph)
 void Plane::computeUV(const Point& Ph, float&u, float& v)
 {
     float X,Y,Z;
-    Vector3D temp = subP4P(Ph,*P0);
-    X = dotProduct(naxes[0], temp)/texScale[0];
-    Y = dotProduct(naxes[1], temp)/texScale[1];
-    Z = dotProduct(naxes[2], temp)/texScale[2];
+    Vector3D temp = Ph-(*P0);
+    X = dot(naxes[0], temp)/texScale[0];
+    Y = dot(naxes[1], temp)/texScale[1];
+    Z = dot(naxes[2], temp)/texScale[2];
 
-    u = (normal->DX() == -1) ? Y - (int)Y : ( (normal->DY()== -1) ? Z-(int)Z : X-(int)X);
+    u = (normal->vec[0] == -1) ? Y - (int)Y : ( (normal->vec[1]== -1) ? Z-(int)Z : X-(int)X);
     if(u<0) u=1+u;
-    v = (normal->DX() == -1) ? Z - (int)Z : ( (normal->DY()== -1) ? X-(int)X : Y-(int)Y);
+    v = (normal->vec[0] == -1) ? Z - (int)Z : ( (normal->vec[1]== -1) ? X-(int)X : Y-(int)Y);
     if(v<0) v=1+v;
 }
 
 void Plane::translate(float time)
 {
-    this->P0->set(addP2V(*P0,mulV(*Move, (speed*time))));
+	Point tmp = (*P0)+(*Move)*(speed*time);
+    this->P0->set(tmp.x,tmp.y,tmp.z);
 }
 
 void Plane::moveAxis(float theta_abtY)
@@ -198,7 +199,7 @@ Sphere::Sphere(Point& cen, float r, Vector3D* n, float s[], char t, unsigned int
     naxes = new Vector3D[3];
     this->naxes[0] = n[0];
     this->naxes[1] = n[1];
-    this->naxes[2].set(crossProduct(n[0], n[1]));
+    this->naxes[2] = cross(n[0], n[1]);
     this->texScale[0] = s[0];
     this->texScale[1] = s[1];
     this->texScale[2] = s[2];
@@ -207,10 +208,10 @@ Sphere::Sphere(Point& cen, float r, Vector3D* n, float s[], char t, unsigned int
 float Sphere::intersect(Ray r)
 {
     float ret_val, b, c, discri;
-    Vector3D Vce = subP4P(*center, r.getOrigin());
+    Vector3D Vce = *center - r.origin;
 
-    b = dotProduct( r.getDirection(), Vce);
-    c = dotProduct(Vce,Vce) - radius*radius;
+    b = dot( r.direction, Vce);
+    c = dot(Vce,Vce) - radius*radius;
     discri = b*b-c;
     if( b > 0.0 && discri >= 0.0 )
         ret_val = (b-sqrt(discri));
@@ -222,14 +223,14 @@ float Sphere::intersect(Ray r)
 bool Sphere::isVisible(const Point& p)
 {
     bool ret_val;
-    Vector3D temp = subP4P(*center,p);
-    ret_val = ( dotProduct(temp,temp) - (radius*radius) > 0 );
+    Vector3D temp = *center-p;
+    ret_val = ( dot(temp,temp) - (radius*radius) > 0 );
     return ret_val;
 }
 
 void Sphere::extract_Color_Normal(const Point& Ph, Vector3D &norm, PixColor &mycolor)
 {
-    norm.set(subP4P(Ph,*center));
+    norm = Ph - *center;
     norm.normalize();
 
     if( isTextureEnabled() )
@@ -251,7 +252,7 @@ void Sphere::extract_Color_Normal(const Point& Ph, Vector3D &norm, PixColor &myc
 
 Vector3D Sphere::getNormal(const Point& Ph)
 {
-    Vector3D ret_val = subP4P(Ph,*center);
+    Vector3D ret_val = Ph-*center;
     ret_val.normalize();
     return ret_val;
 }
@@ -277,17 +278,18 @@ PixColor Sphere::getColor(const Point& Ph)
 
 void Sphere::computeUV(const Point& Ph, float&u, float& v)
 {
-    Vector3D temp = subP4P(Ph,*center);
-    float X = dotProduct(naxes[0], temp)/radius;
-    float Y = dotProduct(naxes[1], temp)/radius;
-    float Z = dotProduct(naxes[2], temp)/radius;
+    Vector3D temp = Ph-*center;
+    float X = dot(naxes[0], temp)/radius;
+    float Y = dot(naxes[1], temp)/radius;
+    float Z = dot(naxes[2], temp)/radius;
     u = 0.5*atan2(Y,X)/PI+0.5;
     v = acos(Z) / PI;
 }
 
 void Sphere::translate(float time)
 {
-    this->center->set(addP2V(*center,mulV(*Move, (speed*time))));
+	Point tmp = (*center)+(*Move)*(speed*time);
+    this->center->set(tmp.x,tmp.y,tmp.z);
 }
 
 void Sphere::moveAxis(float theta_abtY)
@@ -323,9 +325,9 @@ Quadric::Quadric(Vector3D& M, Vector3D& m, Point& p, float sval[], float ai[], c
 
     // Generate the Local Coordinate space
     this->n = new Vector3D[3];
-    n[0].set(*majorAX);
-    n[1].set(*minorAX);
-    n[2].set(crossProduct(n[0],n[1]));
+    n[0] = *majorAX;
+    n[1] = *minorAX;
+    n[2] = cross(n[0],n[1]);
     n[0].normalize();
     n[1].normalize();
     n[2].normalize();
@@ -359,27 +361,27 @@ float Quadric::intersect(Ray r)
 {
     float ret_val=-1.0;
     unsigned int i;
-    Point Pe = r.getOrigin();
-    Vector3D n_pe = r.getDirection();
+    Point Pe = r.origin;
+    Vector3D n_pe = r.direction;
 
     float A,B,C,discri,t1,t2;
     A=B=C=0.0;
     // compute t^2 co-efficient
     for(i=0; i<3; i++)
     {
-        A = A + ( (ai2[i] * pow(dotProduct(n[i],n_pe),2)) / pow(s[i],2) );
+        A = A + ( (ai2[i] * pow(dot(n[i],n_pe),2)) / pow(s[i],2) );
     }
     // compute t co-efficient
-    Vector3D temp = subP4P(Pe,*Pc);
+    Vector3D temp = Pe-*Pc;
     for(i=0; i<3; i++)
     {
-        float tmp = dotProduct(n[i],n_pe);
-        B = B + ( (2 * ai2[i] * tmp * dotProduct(n[i], temp)) / pow(s[i],2) ) + ( (ai1[i]*tmp) / s[i] );
+        float tmp = dot(n[i],n_pe);
+        B = B + ( (2 * ai2[i] * tmp * dot(n[i], temp)) / pow(s[i],2) ) + ( (ai1[i]*tmp) / s[i] );
     }
     // compute constant
     for(i=0; i<3; i++)
     {
-        float tmp = dotProduct(n[i], temp);
+        float tmp = dot(n[i], temp);
         C = C + ( (ai2[i] * pow(tmp,2)) / pow(s[i],2) ) + ( (ai1[i]*tmp) / s[i] );
     }
 
@@ -410,10 +412,10 @@ float Quadric::intersect(Ray r)
 bool Quadric::isVisible(const Point& p)
 {
     float ret_val=0;
-    Vector3D temp = subP4P(p,*Pc);
+    Vector3D temp = p-*Pc;
     for(unsigned int i=0; i <3; i++)
     {
-        float xi = dotProduct(n[i], temp)/s[i];
+        float xi = dot(n[i], temp)/s[i];
         ret_val = ret_val + (ai2[i]*xi*xi) + (ai1[i]*xi);
     }
     return (( (ret_val+a00) <= 0 ) ? false : true );
@@ -422,14 +424,14 @@ bool Quadric::isVisible(const Point& p)
 void Quadric::extract_Color_Normal(const Point& Ph, Vector3D &norm, PixColor &mycolor)
 {
     Vector3D v(0,0,0);
-    Vector3D temp = subP4P(Ph,*(this->Pc));
+    Vector3D temp = Ph - *(this->Pc);
     for(unsigned int i=0; i<3; i++)
     {
-        Vector3D vtmp = addV2V(mulV(n[i], (2 * ai2[i] * dotProduct(n[i],temp))/(s[i]*s[i])), mulV(n[i],(ai1[i]/s[i])));
-        v.add(vtmp);
+        Vector3D vtmp = (n[i]*((2 * ai2[i] * dot(n[i],temp))/(s[i]*s[i])) + (n[i]*(ai1[i]/s[i])));
+        v = v + vtmp;
     }
     v.normalize();
-    norm.set(v);
+    norm = v;
 
     if( isTextureEnabled() )
     {
@@ -451,11 +453,11 @@ void Quadric::extract_Color_Normal(const Point& Ph, Vector3D &norm, PixColor &my
 Vector3D Quadric::getNormal(const Point& Ph)
 {
     Vector3D v(0,0,0);
-    Vector3D temp = subP4P(Ph,*(this->Pc));
+    Vector3D temp = Ph - *(this->Pc);
     for(unsigned int i=0; i<3; i++)
     {
-        Vector3D vtmp = addV2V(mulV(n[i], (2 * ai2[i] * dotProduct(n[i],temp))/(s[i]*s[i])), mulV(n[i],(ai1[i]/s[i])));
-        v.add(vtmp);
+        Vector3D vtmp = (n[i]*((2 * ai2[i] * dot(n[i],temp))/(s[i]*s[i])))+(n[i]*((ai1[i]/s[i])));
+        v = v + vtmp;
     }
     v.normalize();
     return v;
@@ -483,10 +485,10 @@ PixColor Quadric::getColor(const Point& Ph)
 void Quadric::computeUV(const Point& Ph, float&u, float& v)
 {
     float X,Y,Z;
-    Vector3D temp = subP4P(Ph,*Pc);
-    X = dotProduct(n[0], temp)/s[0];
-    Y = dotProduct(n[1], temp)/s[1];
-    Z = dotProduct(n[2], temp)/s[2];
+    Vector3D temp = Ph-*Pc;
+    X = dot(n[0], temp)/s[0];
+    Y = dot(n[1], temp)/s[1];
+    Z = dot(n[2], temp)/s[2];
     /*
      * P -Plane; E -Ellipsoid; Y - Paraboloid;
      * C - Cylinder; K - Cone; H - Hyperboloid.
@@ -626,7 +628,8 @@ void Quadric::computeUV(const Point& Ph, float&u, float& v)
 
 void Quadric::translate(float time)
 {
-    this->Pc->set(addP2V(*Pc,mulV(*Move, (speed*time))));
+	Point tmp = (*Pc) + (*Move)*(speed*time);
+	this->Pc->set(tmp.x,tmp.y,tmp.z);
 }
 
 void Quadric::moveAxis(float theta_abtY)
@@ -717,9 +720,9 @@ void TriangularMesh::loadMesh(const char* filename)
 
     for(unsigned int i=0;i<triangles.size(); i++)
     {
-        Vector3D vtmp = subP4P( *v[triangles[i]->a1-1], *v[triangles[i]->a0-1]);
-        Vector3D vtmp2 = subP4P( *v[triangles[i]->a2-1], *v[triangles[i]->a0-1]);
-        Vector3D *fnorm = new Vector3D(crossProduct( vtmp, vtmp2 ));
+        Vector3D vtmp  = *v[triangles[i]->a1-1] - *v[triangles[i]->a0-1];
+        Vector3D vtmp2 = *v[triangles[i]->a2-1] - *v[triangles[i]->a0-1];
+        Vector3D *fnorm = new Vector3D(cross( vtmp, vtmp2 ));
         faceNormals.push_back(fnorm);
     }
 }
@@ -732,35 +735,35 @@ bool TriangularMesh::insideTriangle(const Point& Ph, unsigned int index)
     float ut,vt,wt;
 
     Vector3D A = *faceNormals[index];
-    Vector3D A1 = crossProduct( subP4P(*v[triangles[index]->a1-1], Ph), subP4P(*v[triangles[index]->a2-1], Ph) );
-    Vector3D A2 = crossProduct( subP4P(*v[triangles[index]->a2-1], Ph), subP4P(*v[triangles[index]->a0-1], Ph) );
+    Vector3D A1 = cross( (*v[triangles[index]->a1-1])-Ph, (*v[triangles[index]->a2-1])-Ph );
+    Vector3D A2 = cross( (*v[triangles[index]->a2-1])-Ph, (*v[triangles[index]->a0-1])-Ph );
 
     // u computation
-    a = (A1.DX() < 0) ? A1.DX()*-1.0 : A1.DX();
-    b = (A1.DY() < 0) ? A1.DY()*-1.0 : A1.DY();
-    c = (A1.DZ() < 0) ? A1.DZ()*-1.0 : A1.DZ();
+    a = (A1.vec[0] < 0) ? A1.vec[0]*-1.0 : A1.vec[0];
+    b = (A1.vec[1] < 0) ? A1.vec[1]*-1.0 : A1.vec[1];
+    c = (A1.vec[2] < 0) ? A1.vec[2]*-1.0 : A1.vec[2];
     mu = max(a,max(b,c));
     if( a == mu)
-        ut = A1.DX()/A.DX();
+        ut = A1.vec[0]/A.vec[0];
     else if(b == mu)
-        ut = A1.DY()/A.DY();
+        ut = A1.vec[1]/A.vec[1];
     else
-        ut = A1.DZ()/A.DZ();
+        ut = A1.vec[2]/A.vec[2];
     // check for a miss to return preempt uneccessary calculations
     if(ut<0 || ut>1)
         return ret_val;
 
     // v computation
-    a = (A2.DX() < 0) ? A2.DX()*-1.0 : A2.DX();
-    b = (A2.DY() < 0) ? A2.DY()*-1.0 : A2.DY();
-    c = (A2.DZ() < 0) ? A2.DZ()*-1.0 : A2.DZ();
+    a = (A2.vec[0] < 0) ? A2.vec[0]*-1.0 : A2.vec[0];
+    b = (A2.vec[1] < 0) ? A2.vec[1]*-1.0 : A2.vec[1];
+    c = (A2.vec[2] < 0) ? A2.vec[2]*-1.0 : A2.vec[2];
     mv = max(a,max(b,c));
     if( a == mv)
-        vt = A2.DX()/A.DX();
+        vt = A2.vec[0]/A.vec[0];
     else if(b == mv)
-        vt = A2.DY()/A.DY();
+        vt = A2.vec[1]/A.vec[1];
     else
-        vt = A2.DZ()/A.DZ();
+        vt = A2.vec[2]/A.vec[2];
     // check for a miss to return preempt uneccessary calculations
     if(vt<0 || vt>1)
         return ret_val;
@@ -776,9 +779,9 @@ bool TriangularMesh::insideTriangle(const Point& Ph, unsigned int index)
 Vector3D TriangularMesh::trilinearInterpolation(float u, float v, const Vector3D *vn1, const Vector3D *vn2, const Vector3D *vn3)
 {
     Vector3D norm;
-    float x = u*vn1->DX() + v*vn2->DX() + (1-u-v)*vn3->DX();
-    float y = u*vn1->DY() + v*vn2->DY() + (1-u-v)*vn3->DY();
-    float z = u*vn1->DZ() + v*vn2->DZ() + (1-u-v)*vn3->DZ();
+    float x = u*vn1->vec[0] + v*vn2->vec[0] + (1-u-v)*vn3->vec[0];
+    float y = u*vn1->vec[1] + v*vn2->vec[1] + (1-u-v)*vn3->vec[1];
+    float z = u*vn1->vec[2] + v*vn2->vec[2] + (1-u-v)*vn3->vec[2];
     norm.set(x,y,z);
     norm.normalize();
     return norm;
@@ -794,12 +797,12 @@ float TriangularMesh::intersect(Ray r)
 
     for(unsigned int i=0; i<triangles.size(); i++)
     {
-        float tmp = dotProduct(*faceNormals[i],r.getDirection());
+        float tmp = dot(*faceNormals[i],r.direction);
         if( tmp <= 0)
         {
             // Compute corresponding Ph
-            t = dotProduct( *faceNormals[i], subP4P(*v[triangles[i]->a0-1], r.getOrigin())) / tmp;
-            Ph = addP2V(r.getOrigin(),mulV(r.getDirection(),t));
+            t = dot( *faceNormals[i], (*v[triangles[i]->a0-1] - r.origin)) / tmp;
+            Ph = r.origin + r.direction*t;
 
             if(this->insideTriangle( Ph, i))
             {
@@ -807,7 +810,7 @@ float TriangularMesh::intersect(Ray r)
                 {
                     ret_val = t;
                     minID = i;
-                    minPh->set(Ph);
+                    minPh->operator=(Ph);
                 }
                 triangleEncounter++;
             }
@@ -870,31 +873,31 @@ void TriangularMesh::computeUV(const Point& Ph, float &u_tex, float &v_tex)
     float mu,mv;
 
     Vector3D A = *faceNormals[minID];
-    Vector3D A1 = crossProduct( subP4P(*v[triangles[minID]->a1-1], *minPh), subP4P(*v[triangles[minID]->a2-1], *minPh) );
-    Vector3D A2 = crossProduct( subP4P(*v[triangles[minID]->a2-1], *minPh), subP4P(*v[triangles[minID]->a0-1], *minPh) );
+    Vector3D A1 = cross( (*v[triangles[minID]->a1-1])-(*minPh), (*v[triangles[minID]->a2-1])-(*minPh) );
+    Vector3D A2 = cross( (*v[triangles[minID]->a2-1])-(*minPh), (*v[triangles[minID]->a0-1])-(*minPh) );
 
     // u computation
-    a = (A1.DX() < 0) ? A1.DX()*-1.0 : A1.DX();
-    b = (A1.DY() < 0) ? A1.DY()*-1.0 : A1.DY();
-    c = (A1.DZ() < 0) ? A1.DZ()*-1.0 : A1.DZ();
+    a = (A1.vec[0] < 0) ? A1.vec[0]*-1.0 : A1.vec[0];
+    b = (A1.vec[1] < 0) ? A1.vec[1]*-1.0 : A1.vec[1];
+    c = (A1.vec[2] < 0) ? A1.vec[2]*-1.0 : A1.vec[2];
     mu = max(a,max(b,c));
     if( a == mu)
-        u_tex = A1.DX()/A.DX();
+        u_tex = A1.vec[0]/A.vec[0];
     else if(b == mu)
-        u_tex = A1.DY()/A.DY();
+        u_tex = A1.vec[1]/A.vec[1];
     else
-        u_tex = A1.DZ()/A.DZ();
+        u_tex = A1.vec[2]/A.vec[2];
     // v computation
-    a = (A2.DX() < 0) ? A2.DX()*-1.0 : A2.DX();
-    b = (A2.DY() < 0) ? A2.DY()*-1.0 : A2.DY();
-    c = (A2.DZ() < 0) ? A2.DZ()*-1.0 : A2.DZ();
+    a = (A2.vec[0] < 0) ? A2.vec[0]*-1.0 : A2.vec[0];
+    b = (A2.vec[1] < 0) ? A2.vec[1]*-1.0 : A2.vec[1];
+    c = (A2.vec[2] < 0) ? A2.vec[2]*-1.0 : A2.vec[2];
     mv = max(a,max(b,c));
     if( a == mv)
-        v_tex = A2.DX()/A.DX();
+        v_tex = A2.vec[0]/A.vec[0];
     else if(b == mv)
-        v_tex = A2.DY()/A.DY();
+        v_tex = A2.vec[1]/A.vec[1];
     else
-        v_tex = A2.DZ()/A.DZ();
+        v_tex = A2.vec[2]/A.vec[2];
 }
 
 void TriangularMesh::translate(float time)

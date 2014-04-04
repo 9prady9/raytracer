@@ -52,57 +52,52 @@ public:
 
 class Point
 {
-private:
-    float x,y,z;
 public:
-    Point();
+    float x,y,z;
+
+	Point();
     Point(float a,float b, float c);
     Point(const Point& p);
     void set(float a,float b, float c);
-    void set(Point p);
-    float X() const;
-    float Y() const;
-    float Z() const;
     Point& operator=(const Point& p);
 };
 
-
 class Vector3D
 {
-private:
+public:
     float vec[3];
     float mag;
-public:
+
     Vector3D();
     Vector3D(float x,float y,float z);
     Vector3D(const Vector3D& v);
     void set(float x,float y,float z);
-    void set(Vector3D v);
-    float DX() const;
-    float DY() const;
-    float DZ() const;
-    float magnitude();
-    int length();    
-    void add(Vector3D& v);
     void normalize();
     void invert();
     Vector3D& operator=(const Vector3D& v);
 };
 
-
 class Ray
 {
-private:
-    Point* origin;
-    Vector3D* direction;
 public:
-    Ray();
-    Ray(Point o, Vector3D dir);
-    Point getOrigin();
-    Vector3D getDirection();
+    Point origin;
+    Vector3D direction;
+
+    Ray(const Point &o, const Vector3D &dir);
+	Ray(const Ray& r);
     Point pointAtDist(float t);
-    ~Ray();
 };
+
+
+Point operator+(const Point& op1, const Vector3D& op2);
+Vector3D operator-(const Point& op1, const Point& op2);
+Point operator-(const Point& op1, const Vector3D& op2);
+Vector3D operator+(const Vector3D& op1, const Vector3D& op2);
+Vector3D operator-(const Vector3D& op1, const Vector3D& op2);
+Vector3D operator*(const Vector3D& op1, const float op2);
+Vector3D operator/(const Vector3D& op1,const float op2);
+Vector3D cross(const Vector3D& v0, const Vector3D& v1);
+float dot(const Vector3D& v0, const Vector3D& v1);
 
 
 class Mat
@@ -126,21 +121,11 @@ public:
     ~Mat();
 };
 
+
 float d_rand(float low, float high);
 float min(float a, float b);
 float max(float a, float b);
 void copyArray(int* dest, int* source, int size);
-
-Point addP2V(const Point& op1, const Vector3D& op2);
-Vector3D subP4P(const Point& op1, const Point& op2);
-Point subP4V(const Point& op1, const Vector3D& op2);
-Vector3D addV2V(const Vector3D& op1, const Vector3D& op2);
-Vector3D subV4V(const Vector3D& op1, const Vector3D& op2);
-Vector3D mulV(const Vector3D& op1, const float op2);
-Vector3D divV(const Vector3D& op1,const float op2);
-Vector3D crossProduct(const Vector3D& v0, const Vector3D& v1);
-float dotProduct(const Vector3D& v0, const Vector3D& v1);
-
 Mat toMatrix(Vector3D& v);
 Vector3D rotateVec(Mat& t, Vector3D& v);
 Vector3D toVector(Mat& m);

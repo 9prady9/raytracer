@@ -36,7 +36,7 @@ public:
     Vector3D* up;
     unsigned int m,n;
     PixColor* AC;
-    // Constructors to Initialize data
+    // Constructors
     AreaLight(Point& Pc, Vector3D& v2, Vector3D& up, unsigned int m, unsigned int n, PixColor& AC);
     ~AreaLight();
 };

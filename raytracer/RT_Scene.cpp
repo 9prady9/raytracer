@@ -9,11 +9,13 @@
 #include <ctime>
 #include <QtGui>
 #include <QtXml>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 
 using namespace std;
 
 
-/* ------------- Methods of AreaLight class ------------- */
+/* ------------- AreaLight class ------------- */
 AreaLight::AreaLight(Point& Pc, Vector3D& v2, Vector3D& up, unsigned int m, unsigned int n, PixColor& AC)
 {
     unsigned int i,j;
@@ -35,14 +37,14 @@ AreaLight::AreaLight(Point& Pc, Vector3D& v2, Vector3D& up, unsigned int m, unsi
     Vector3D n1 = *this->up;
     srand(time(NULL));
 
-    len = this->v2->magnitude();
-    brth = this->up->magnitude();
-    Point Origin = subP4V(*this->Pc,addV2V(mulV(n0,len/2.0),mulV(n1,brth/2.0)));
+    len = this->v2->mag;
+    brth = this->up->mag;
+    Point Origin = (*this->Pc) - ((n0*len/2.0)+(n1*brth/2.0));
 
     for(i=0;i<m;i++)
     {
         for(j=0; j<n;j++)
-            mn_Lights[i][j] = addP2V(Origin,addV2V(mulV(n0, (i*len/n+d_rand(0,0.2))), mulV(n1, (j*brth/m+d_rand(0,0.2)))));
+            mn_Lights[i][j] = Origin + ((n0*(i*len/n+d_rand(0,0.2)))+(n1*(j*brth/m+d_rand(0,0.2))));
     }
 }
 
@@ -58,7 +60,8 @@ AreaLight::~AreaLight()
 }
 
 
-/* ------------- Methods of PinHoleCam class ------------- */
+#pragma region XML DomReader helpers
+
 void PinHoleCam::parseSceneElement(const QDomElement &elt)
 {
     for(QDomElement element = elt.firstChildElement(); !element.isNull(); element = element.nextSiblingElement())
@@ -87,11 +90,13 @@ void PinHoleCam::parseSceneElement(const QDomElement &elt)
             parseTripletElement(element,sceneTreeWidget->invisibleRootItem());
         }else if( element.tagName() == "ambientOcclusion" ) {
             parseCoupleElement(element,sceneTreeWidget->invisibleRootItem());
-        }else if( element.tagName() == "envMap" && this->EnvironmentMapEnabled ) {
-            parseEnvMapElement(element,sceneTreeWidget->invisibleRootItem());
+        }else if( element.tagName() == "envMap" ) {
+			if( this->EnvironmentMapEnabled )
+				parseEnvMapElement(element,sceneTreeWidget->invisibleRootItem());
         }else {
-            std::cerr << "Scene description file: Unkown tag encountered under tag <"<<
-                         elt.tagName().toStdString() <<">"<<std::endl;
+            std::cerr << "Scene description file: Unkown tag <"<<
+				element.tagName().toStdString()<<"> encountered under tag <"<<
+				elt.tagName().toStdString() <<">"<<std::endl;
         }
     }
 }
@@ -302,7 +307,7 @@ void PinHoleCam::parseALightElement(const QDomElement &elt, QTreeWidgetItem *par
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            ptemp.set(Point(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            ptemp.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             centerItem->setText(1,temp1);
         }else if(element.tagName()=="horizontal") {
@@ -310,7 +315,7 @@ void PinHoleCam::parseALightElement(const QDomElement &elt, QTreeWidgetItem *par
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            vtmp1.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            vtmp1.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             horizontalItem->setText(1,temp1);
         }else if(element.tagName()=="vertical") {
@@ -318,7 +323,7 @@ void PinHoleCam::parseALightElement(const QDomElement &elt, QTreeWidgetItem *par
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            vtmp2.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            vtmp2.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             verticalItem->setText(1,temp1);
         }else if(element.tagName()=="samples") {
@@ -560,7 +565,7 @@ void PinHoleCam::parsePlaneElement(const QDomElement &elt, QTreeWidgetItem *pare
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            normal.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            normal.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             normalItem->setText(1,temp1);
         }else if(element.tagName()=="point") {
@@ -568,7 +573,7 @@ void PinHoleCam::parsePlaneElement(const QDomElement &elt, QTreeWidgetItem *pare
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            ptmp.set(Point(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            ptmp.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             pointItem->setText(1,temp1);
         }else if(element.tagName()=="haxis") {
@@ -576,17 +581,15 @@ void PinHoleCam::parsePlaneElement(const QDomElement &elt, QTreeWidgetItem *pare
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            vtmp.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
-            axes[0].set(vtmp);
+            axes[0].set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             haxisItem->setText(1,temp1);
         }else if(element.tagName()=="vaxis") {
             vaxisItem->setText(0,element.tagName());
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
-            temp3 = element.attribute("z");
-            vtmp.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
-            axes[1].set(vtmp);
+            temp3 = element.attribute("z");            
+            axes[1].set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             vaxisItem->setText(1,temp1);
         }else if(element.tagName()=="scale") {
@@ -619,7 +622,7 @@ void PinHoleCam::parsePlaneElement(const QDomElement &elt, QTreeWidgetItem *pare
                 temp1 = sibling.attribute("x");
                 temp2 = sibling.attribute("y");
                 temp3 = sibling.attribute("z");
-                direc.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+                direc.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
                 temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
                 directionItem->setText(1,temp1);
             } else {
@@ -676,7 +679,7 @@ void PinHoleCam::parseSphereElement(const QDomElement &elt, QTreeWidgetItem *par
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            center.set(Point(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            center.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             centerItem->setText(1,temp1);
         }else if(element.tagName()=="radius") {
@@ -688,8 +691,7 @@ void PinHoleCam::parseSphereElement(const QDomElement &elt, QTreeWidgetItem *par
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            vtmp.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
-            axes[0].set(vtmp);
+            axes[0].set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             haxisItem->setText(1,temp1);
         }else if(element.tagName()=="vaxis") {
@@ -697,8 +699,7 @@ void PinHoleCam::parseSphereElement(const QDomElement &elt, QTreeWidgetItem *par
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            vtmp.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
-            axes[1].set(vtmp);
+            axes[1].set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             vaxisItem->setText(1,temp1);
         }else if(element.tagName()=="scale") {
@@ -731,7 +732,7 @@ void PinHoleCam::parseSphereElement(const QDomElement &elt, QTreeWidgetItem *par
                 temp1 = sibling.attribute("x");
                 temp2 = sibling.attribute("y");
                 temp3 = sibling.attribute("z");
-                direc.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+                direc.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
                 temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
                 directionItem->setText(1,temp1);
             } else {
@@ -788,7 +789,7 @@ void PinHoleCam::parseQuadricElement(const QDomElement &elt, QTreeWidgetItem *pa
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            ptmp.set(Point(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            ptmp.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             pointItem->setText(1,temp1);
         }else if(element.tagName()=="aValues") {
@@ -827,7 +828,7 @@ void PinHoleCam::parseQuadricElement(const QDomElement &elt, QTreeWidgetItem *pa
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            haxis.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            haxis.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             haxisItem->setText(1,temp1);
         }else if(element.tagName()=="vaxis") {
@@ -835,7 +836,7 @@ void PinHoleCam::parseQuadricElement(const QDomElement &elt, QTreeWidgetItem *pa
             temp1 = element.attribute("x");
             temp2 = element.attribute("y");
             temp3 = element.attribute("z");
-            vaxis.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+            vaxis.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
             temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
             vaxisItem->setText(1,temp1);
         }else if(element.tagName()=="scale") {
@@ -868,7 +869,7 @@ void PinHoleCam::parseQuadricElement(const QDomElement &elt, QTreeWidgetItem *pa
                 temp1 = sibling.attribute("x");
                 temp2 = sibling.attribute("y");
                 temp3 = sibling.attribute("z");
-                direc.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+                direc.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
                 temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
                 directionItem->setText(1,temp1);
             } else {
@@ -940,7 +941,7 @@ void PinHoleCam::parseTriangularMeshElement(const QDomElement &elt, QTreeWidgetI
                 temp1 = sibling.attribute("x");
                 temp2 = sibling.attribute("y");
                 temp3 = sibling.attribute("z");
-                direc.set(Vector3D(temp1.toFloat(),temp2.toFloat(),temp3.toFloat()));
+                direc.set(temp1.toFloat(),temp2.toFloat(),temp3.toFloat());
                 temp1 = "(" + temp1 + "," + temp2 + "," + temp3 + ")";
                 directionItem->setText(1,temp1);
             } else {
@@ -974,6 +975,9 @@ void PinHoleCam::parseObjectsElement(const QDomElement &elt)
         }        
     }
 }
+
+#pragma endregion XML DomReader helpers
+
 
 PinHoleCam::PinHoleCam(QObject *parent, Production rendering, bool EMap, QStringList &input, QTreeWidget *stree, QTreeWidget *otree, Production ifAnimation)
     :QThread(parent)
@@ -1040,13 +1044,13 @@ PinHoleCam::PinHoleCam(QObject *parent, Production rendering, bool EMap, QString
     /* Compute the orthogonal unit vectors to define space */    
     Vector3D n2 = *V_view;
     n2.normalize();
-    SceneCenter = new Point(addP2V(*Pe,mulV(n2,d)));
-    n0 = new Vector3D(crossProduct(*V_view,*V_up));
+    SceneCenter = new Point((*Pe)+n2*d);
+    n0 = new Vector3D(cross(*V_view,*V_up));
     n0->normalize();
-    n1 = new Vector3D(crossProduct(*n0,n2));
+    n1 = new Vector3D(cross(*n0,n2));
 
     /*  Compute the origin of the scene */
-    SceneOrigin = new Point(subP4V(*SceneCenter,addV2V( mulV(*n0,Sx/2.0), mulV(*n1,Sy/2.0))));
+    SceneOrigin = new Point( (*SceneCenter) - ((*n0)*(Sx/2.0)+(*n1)*(Sy/2.0)) );
 
     // enum Production { IGNORE, RAYTRACE, DOF, MB, AMBOCC, ANIMATE, COMBINE };
     switch(renderingType)
@@ -1184,7 +1188,8 @@ PinHoleCam::~PinHoleCam()
     delete n0;
     delete n1;
     delete V_up;
-    delete EnvironmentMap;
+	if(this->EnvironmentMapEnabled)
+		delete EnvironmentMap;
     delete specL;
     delete AmbientL;
     delete Cc;
@@ -1199,8 +1204,7 @@ PinHoleCam::~PinHoleCam()
     for(unsigned int k=0; k < Radials.size(); k++ )
         delete Radials[k];
     for(unsigned int k=0; k < OBJ_LIST.size(); k++ )
-        delete OBJ_LIST[k];
-
+        delete OBJ_LIST[k];	
 }
 
 void PinHoleCam::readRadials(const char* filename)
@@ -1233,16 +1237,22 @@ void PinHoleCam::resetChannel()
     this->max_channel = 1.0;
     this->min_channel = 0.0;
 
+	Point tempP;
+	Vector3D tempV;
     // Added here to recompute scene_origin while adding animate function
     Vector3D n2 = *V_view;
     n2.normalize();
-    SceneCenter->set(addP2V(*Pe,mulV(n2,d)));
-    n0->set(crossProduct(*V_view,*V_up));
+	tempP = ((*Pe) + n2*d);
+	SceneCenter->set(tempP.x,tempP.y,tempP.z);
+	tempV = cross(*V_view,*V_up);
+    n0->set(tempV.vec[0],tempV.vec[1],tempV.vec[2]);
     n0->normalize();
-    n1->set(crossProduct(*n0,n2));
+	tempV = cross(*n0,n2);
+    n1->set(tempV.vec[0],tempV.vec[1],tempV.vec[2]);
 
     /*  Compute the origin of the scene */
-    SceneOrigin->set(subP4V(*SceneCenter,addV2V( mulV(*n0,Sx/2.0), mulV(*n1,Sy/2.0))));
+	Point temp = (*SceneCenter) - ((*n0)*(Sx/2.0)+(*n1)*(Sy/2.0));
+	SceneOrigin->set(tempP.x,tempP.y,tempP.z);
 }
 
 void PinHoleCam::moveCamera(float theta)
@@ -1276,7 +1286,7 @@ PixColor PinHoleCam::rayCast(Ray r, int depth, int reflnDepth, int refrDepth, un
 
     for(unsigned int k=0; k<OBJ_LIST.size(); k++)
     {
-        if( OBJ_LIST[k]->isVisible(r.getOrigin()) )
+        if( OBJ_LIST[k]->isVisible(r.origin) )
         {
             t = OBJ_LIST[k]->intersect(r);
             if(t>1.0e-5 && (t < tmin || !tmin))
@@ -1289,7 +1299,7 @@ PixColor PinHoleCam::rayCast(Ray r, int depth, int reflnDepth, int refrDepth, un
 
     if( tmin>0 && min_id != -1 )
     {
-        Point Ph = addP2V(r.getOrigin(), mulV(r.getDirection(), tmin));
+        Point Ph = r.origin + (r.direction*tmin);
         ret_val = computeEffectofLights(Ph, r, min_id, depth, reflnDepth, refrDepth, prevMinId);
     }
     else if(EnvironmentMapEnabled)
@@ -1303,7 +1313,7 @@ bool PinHoleCam::isReflectionObstructed(const Point& Ph, const Point& Pl, const 
 {
     bool ret_val=false;
     float t;
-    float D2Light = subP4P(Ph,Pl).magnitude();
+    float D2Light = (Ph-Pl).mag;
     Ray r(Ph,n_lh);
 
     for(unsigned int k=0; k<OBJ_LIST.size(); k++)
@@ -1327,12 +1337,12 @@ PixColor PinHoleCam::computeEffectofLights(const Point& Ph, Ray ry, unsigned int
     PixColor Ch_tmin;
     Vector3D n_h;
     Vector3D r;
-    Vector3D n_pe = ry.getDirection();
+    Vector3D n_pe = ry.direction;
     float C;
 
     OBJ_LIST[min_id]->extract_Color_Normal(Ph, n_h, Ch_tmin);
-    C = dotProduct(n_pe,n_h);
-    r = subV4V(n_pe,mulV(n_h,2*C));
+    C = dot(n_pe,n_h);
+    r = n_pe - (n_h*(2*C));
     r.normalize();
 
     if( !OBJ_LIST[min_id]->ifDiffusive() )
@@ -1357,7 +1367,7 @@ PixColor PinHoleCam::computeEffectofLights(const Point& Ph, Ray ry, unsigned int
             if(term < 0)
             {
                 // Total internal reflection happens
-                r = subV4V(n_pe,mulV(n_h,2*C));
+                r = n_pe - n_h*(2*C);
                 r.normalize();
                 Ray reflectedRay(Ph, r);
                 PixColor RRComp = rayCast(reflectedRay,depth+1,reflnDepth+1,refrDepth,min_id);                
@@ -1366,7 +1376,7 @@ PixColor PinHoleCam::computeEffectofLights(const Point& Ph, Ray ry, unsigned int
             else
             {
                 //Refraction Vector3D & component Calculation
-                r = subV4V( mulV(n_h, ((C/neta) + sqrt(term))), mulV(n_pe, (1.0/neta)));
+                r = (n_h*((C/neta) + sqrt(term))) - (n_pe*(1.0/neta));
                 r.normalize();
                 Ray refractedRay(Ph, r);
                 PixColor RRComp = rayCast(refractedRay,depth+1,reflnDepth,refrDepth+1,min_id);
@@ -1382,15 +1392,15 @@ PixColor PinHoleCam::computeEffectofLights(const Point& Ph, Ray ry, unsigned int
         // Loop  through all point lights in the scene
         for(unsigned int light=0; light < Plights.size(); light++)
         {
-            n_lh = subP4P(*Plights[light],Ph);
+            n_lh = (*Plights[light])-Ph;
             n_lh.normalize();
             if( !isReflectionObstructed(Ph, *Plights[light], n_lh, min_id) )
             {
                 //Diffusive component computation
-                cos_theta = dotProduct(n_h,n_lh);   //cos_theta = (cos_theta<0) ? 0.0 : cos_theta;
+                cos_theta = dot(n_h,n_lh);   //cos_theta = (cos_theta<0) ? 0.0 : cos_theta;
                 cos_theta = (1+cos_theta)/2;
                 // Specular highlight computation
-                cos_phi = dotProduct(r,n_lh);
+                cos_phi = dot(r,n_lh);
                 cos_phi = (cos_phi<0) ? 0.0 : pow(cos_phi,phongExp);
 
                 //Below one includes Lambert and Phong Illumination
@@ -1419,15 +1429,15 @@ PixColor PinHoleCam::computeEffectofLights(const Point& Ph, Ray ry, unsigned int
                 for(j=0; j < n; j++ )
                 {
                     Pl = Alights[light]->mn_Lights[i][j];
-                    n_lh = subP4P(Pl,Ph);
+                    n_lh = Pl-Ph;
 
                     if( !isReflectionObstructed(Ph, Pl, n_lh, min_id) )
                     {
                         // Diffusive component computation
-                        cos_theta = dotProduct(n_h,n_lh);
+                        cos_theta = dot(n_h,n_lh);
                         cos_theta = (cos_theta<0) ? 0.0 : cos_theta;
                         // Specular highlight computation
-                        cos_phi = dotProduct(r,n_lh);
+                        cos_phi = dot(r,n_lh);
                         cos_phi = (cos_phi<0) ? 0.0 : pow(cos_phi,phongExp);
 
                         //Below one includes Lambert and Phong Illumination
@@ -1456,10 +1466,10 @@ void PinHoleCam::render()
             {
                 for(j=0; j<n; j++)
                 {
-                    X = I + ((float)i)/m + (rand() % 2)/m;
-                    Y = J + ((float)j)/n + (rand() % 2)/n;
-                    Pp = addP2V(*SceneOrigin,addV2V(mulV(*n0, (Sx*X/Xmax)),mulV(*n1, (Sy*Y/Ymax))));
-                    Vector3D vtmp1 = subP4P(Pp,*Pe);
+                    X = I + (i + rand()%2)/(float)m;
+                    Y = J + (j + rand()%2)/(float)n;
+                    Pp = (*SceneOrigin) + ((*n0)*(Sx*X/Xmax) + (*n1)*(Sy*Y/Ymax));
+                    Vector3D vtmp1 = Pp-*Pe;
                     vtmp1.normalize();
                     Ray ry(*Pe,vtmp1);
                     clr.add(rayCast(ry, 0, 0, 0, -1));
@@ -1508,12 +1518,12 @@ void PinHoleCam::renderWithDOF()
     for(I=0; I< XS; I++)
         rPe[I] = (Point*)malloc(YS * sizeof(Point));
 
-    O_Pe = addP2V(*this->Pe,addV2V(mulV(CamN0,(PeLen/2)),mulV(CamN1, (PeLen/2))));
+    O_Pe = (*this->Pe) + ( CamN0*(PeLen/2) + CamN1*(PeLen/2) );
 
     for(I=0; I < XS; I++)
     {
         for(J=0; J < YS; J++)
-            rPe[I][J] = addP2V(O_Pe,addV2V(mulV(CamN0, (I*PeLen/XS + d_rand(0,PeLen/XS))), mulV(CamN1, ((PeLen-J-1)*PeLen/YS+d_rand(0,PeLen/XS)))));
+            rPe[I][J] = O_Pe + ((CamN0*(I*PeLen/XS + d_rand(0,PeLen/XS))) + (CamN1*((PeLen-J-1)*PeLen/YS+d_rand(0,PeLen/XS))));
     }
 
     /* Now use points distributed over rect. lens and do raycast/raytrace */
@@ -1533,9 +1543,9 @@ void PinHoleCam::renderWithDOF()
                             X = I + ((float)i)/m + (rand() % 2)/m;
                             Y = J + ((float)j)/n + (rand() % 2)/n;
 
-                            Pp = addP2V(*SceneOrigin,addV2V(mulV(*n0, (Sx*X/Xmax)),mulV(*n1, (Sy*Y/Ymax))));
-                            pnt = addP2V(*Pe,mulV(subP4P(Pp,*(this->Pe)),FocalLength));
-                            Vector3D vtmp1 = subP4P(pnt,rPe[alongX][alongY]);
+                            Pp = (*SceneOrigin) + ((*n0)*(Sx*X/Xmax)+(*n1)*(Sy*Y/Ymax));
+                            pnt = (*Pe) + (Pp-(*(this->Pe)))*FocalLength;
+                            Vector3D vtmp1 = pnt - rPe[alongX][alongY];
                             vtmp1.normalize();
                             Ray ry(rPe[alongX][alongY], vtmp1);
                             clr.add(rayCast(ry, 0, 0, 0, -1));
@@ -1601,7 +1611,7 @@ PixColor PinHoleCam::rayTraceAmbOcc(Ray r, int depth, int reflnDepth, int refrDe
 
     for(k=0; k< OBJ_LIST.size(); k++)
     {
-        if( OBJ_LIST[k]->isVisible(r.getOrigin()) )
+        if( OBJ_LIST[k]->isVisible(r.origin) )
         {
             t = OBJ_LIST[k]->intersect(r);
             if(t>1.0e-5 && (t < tmin || !tmin))
@@ -1614,7 +1624,7 @@ PixColor PinHoleCam::rayTraceAmbOcc(Ray r, int depth, int reflnDepth, int refrDe
 
     if(tmin>0)
     {
-        Point Ph = addP2V(r.getOrigin(), mulV(r.getDirection(), tmin));
+        Point Ph = r.origin + r.direction*tmin;
         ret_val = findAmbientOcclusion( Ph, r, min_id, depth, reflnDepth, refrDepth, prevMinId);
     }
     /*else if(EnvironmentMapEnabled)
@@ -1633,13 +1643,13 @@ bool PinHoleCam::isRadialObstructed(Ray r, unsigned int min_id, PixColor& HitCol
 
     for(unsigned int k=0; k<OBJ_LIST.size(); k++)
     {
-        if( OBJ_LIST[k]->isVisible(r.getOrigin()) )
+        if( OBJ_LIST[k]->isVisible(r.origin) )
         {
             t = OBJ_LIST[k]->intersect( r );
             if(t>1.0e-5 && (t < tmin || !tmin) && t < this->HitEffectiveDistance)
             {
                 ret_val=true;
-                HitColor = OBJ_LIST[k]->getColor(r.getOrigin());
+                HitColor = OBJ_LIST[k]->getColor(r.origin);
             }
         }
     }
@@ -1655,17 +1665,17 @@ PixColor PinHoleCam::findAmbientOcclusion(const Point& Ph, Ray r, unsigned int m
     float cos_theta = 0.0;
 
 
-    Vector3D n_pe = ry.getDirection();
+    Vector3D n_pe = ry.direction;
     float C;
 
     OBJ_LIST[min_id]->extract_Color_Normal(Ph, n_h, Ch_tmin);
-    float C = dotProduct(n_pe,n_h);
+    float C = dot(n_pe,n_h);
     Vector3D r = normalize(n_pe - (2*C)*n_h);
 
     n_h = OBJ_LIST[min_id]->getNormal(Ph);
 
-    float C = dotProduct(r.getDirection(),n_h);
-    Vector3D rec = normalize(r.getDirection() - (2*C)*n_h);
+    float C = dot(r.direction,n_h);
+    Vector3D rec = normalize(r.direction - (2*C)*n_h);
     Ray ry(Ph, rec);
     EnvironmentMap->intersect(ry, AC_result);
 
@@ -1712,7 +1722,7 @@ PixColor PinHoleCam::findAmbientOcclusion(const Point& Ph, Ray r, unsigned int m
         for(unsigned int radial=0; radial < this->Radials.size(); radial++)
         {
             n_r = Radials[radial];
-            cos_theta = dotProduct(n_r,n_h);
+            cos_theta = dot(n_r,n_h);
             if( cos_theta >= 0 &&  cos_theta <= 1 )
             {
                 Ray ry(Ph,n_r);
@@ -1754,8 +1764,8 @@ void PinHoleCam::renderAmbOcc()
                 {
                     X = I + ((float)i)/m + (rand() % 2)/m;
                     Y = J + ((float)j)/n + (rand() % 2)/n;
-                    Pp = addP2V(*SceneOrigin, addV2V(mulV(*n0,(Sx*X/Xmax)), mulV(*n1,(Sy*Y/Ymax))));
-                    Vector3D vtmp1 = subP4P(Pp,*Pe);
+                    Pp = (*SceneOrigin)+(((*n0)*(Sx*X/Xmax))+((*n1)*(Sy*Y/Ymax)));
+                    Vector3D vtmp1 = Pp - *Pe;
                     vtmp1.normalize();
                     Ray ry(*Pe, vtmp1);
                     clr.add(rayTraceAmbOcc(ry,0,0,0,-1));
@@ -1910,7 +1920,6 @@ void PinHoleCam::run(void)
         break;
     default:
         std::cout<<"No rendering option"<<std::endl;
-        exit(1);
         break;
     }
     end = time(NULL);
