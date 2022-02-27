@@ -1,3 +1,5 @@
+# OUTDATED WILL BE UPDATED SOON
+
 Note: All distances in the property files should follow same metric unit, otherwise undefined results will appear in the
 rendering.
 
