@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22...3.23)
 
+variable_watch(CMAKE_CXX_FLAGS)
+
 project(tonkytin VERSION 0.1.0
   DESCRIPTION "Hobby Raytracer Project"
   LANGUAGES CXX

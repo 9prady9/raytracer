@@ -45,4 +45,11 @@ requires std::floating_point< T > T PerlinNoise< T >::noise2D(T u, T v)
 	return alpha + 0.5;
 }
 
+#define INSTANTIATE(TYPE)                                 \
+	template PerlinNoise< TYPE >::PerlinNoise();            \
+	template TYPE PerlinNoise< TYPE >::noise2D(TYPE, TYPE); \
+	template PixColor PerlinNoise< TYPE >::getNoiseColor() const;
+
+INSTANTIATE(float)
+
 }  // namespace tonkytin

@@ -30,8 +30,8 @@ class Material {
 	TextureKind mTextureKind;
 	std::string mTextureFileLocation;
 	std::vector< PixColor > mTexels;
-	uint32_t mTextureRows;
-	uint32_t mTextureCols;
+	int32_t mTextureRows;
+	int32_t mTextureCols;
 
 	Material(T mRefractiveIndex, const PixColor &mColour, MaterialKind mMaterialKind, TextureKind mTextureKind,
 	         const std::string &mTextureFileLocation)

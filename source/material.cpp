@@ -1,7 +1,11 @@
 #include "material.hpp"
 
+// #define STB_IMAGE_MANIPULATION // defined via cmake target_compile_definition
 #include <cmath>
 #include <iostream>
+
+#include "math_utils.hpp"
+#include "stb_image.h"
 
 namespace tonkytin {
 
@@ -9,23 +13,16 @@ template< typename T >
 requires std::floating_point< T >
 void Material< T >::readTexture()
 {
-	if (mTextureKind == TextureKind::IMAGE) {
-		unsigned int I, J;
-		QColor c;
-		QImage texture(TextureFile.c_str());
-		if (texture.isNull()) { std::cerr << " Given texture is not read properly; Check file path." << std::endl; }
-		this->mTextureRows = texture.height();
-		this->mTextureCols = texture.width();
+	if (mTextureKind != TextureKind::IMAGE) { return; }
+	int c       = 0;
+	auto buffer = stbi_load(mTextureFileLocation.c_str(), &mTextureCols, &mTextureRows, &c, 4);
 
-		mTexels = new PixColor *[mTextureRows];
-		for (I = 0; I < mTextureRows; I++) mTexels[I] = new PixColor[mTextureCols];
+	const auto nElems = mTextureCols * mTextureRows;
 
-		for (I = 0; I < mTextureRows; I++) {
-			for (J = 0; J < mTextureCols; J++) {
-				c = texture.pixel(I, J);
-				mTexels[I][J].set(c.redF(), c.greenF(), c.blueF(), c.alphaF());
-			}
-		}
+	mTexels.reserve(nElems);
+	for (int32_t i = 0; i < nElems; ++i) {
+		mTexels.template emplace_back(buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3]);
+		buffer += 4;  // A char per component in a texel
 	}
 }
 
@@ -41,9 +38,8 @@ requires std::floating_point< T > PixColor Material< T >::computeTextureColor(T 
 		int j   = (int)Y;
 		u       = X - i;
 		v       = Y - j;
-		PixColor ret_val;
-		bilinearInterpolation(ret_val, u, v, mTexels[i][j], mTexels[i + 1][j], mTexels[i + 1][j + 1], mTexels[i][j + 1]);
-		return ret_val;
+		auto get = [&](int col, int row) { return mTexels[col + row * mTextureRows]; };
+		return interpolate(u, v, get(i, j), get(i + 1, j), get(i + 1, j + 1), get(i, j + 1));
 	} else if (mTextureKind == TextureKind::PROCEDURE) {
 		if (abs(u - 1.0) < 1.0e-6) u = 0.0;
 		if (abs(v - 1.0) < 1.0e-6) v = 0.0;
@@ -56,13 +52,10 @@ requires std::floating_point< T > PixColor Material< T >::computeTextureColor(T 
 		return (fraction*noise->getNoiseColor() + (1-fraction)*this->colour);*/
 
 		if (mFractalGenerator->isInside(u, v)) {
-			PixColor ret_val(0.0, 0.0, 1.0, 0.0);
-			return ret_val;
+			return {0.0, 0.0, 1.0, 0.0};
 		} else {
-			PixColor ret_val(1.0, 1.0, 1.0, 0.0);
-			return ret_val;
+			return {1.0, 1.0, 1.0, 0.0};
 		}
-		// return this->colour;
 	} else {
 		std::cerr << "Texture is not enables, some wrong call occured, chk code\n";
 		PixColor ret_val(0.0, 0.0, 0.0, 0.0);
@@ -101,5 +94,13 @@ requires std::floating_point< T > PixColor Material< T >::computeSolidTextureCol
 	else
 		return WHITE;
 }
+
+#define INSTANTIATE(TYPE)                                                                                      \
+	template Material< TYPE >::Material(TYPE, const PixColor &, MaterialKind, TextureKind, const std::string &); \
+	template void Material< TYPE >::readTexture();                                                               \
+	template PixColor Material< TYPE >::computeTextureColor(TYPE, TYPE);                                         \
+	template PixColor Material< TYPE >::computeSolidTextureColor(const Point &);
+
+INSTANTIATE(float)
 
 }  // namespace tonkytin
